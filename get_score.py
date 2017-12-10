@@ -130,9 +130,16 @@ def parse_user_input():
         return args.user_input.upper()
 
 
-def get_comorbidity(dataframe, measure):
-    """Sum all the instances of comorbid conditions, and add ComorbidityScore as column in dataframe."""
-    pass
+def get_comorbidity(row):
+    """Sum all the instances of comorbid conditions."""
+    comorbidity_score = 0
+    try:
+        # trim LACE columns from row
+        comorbidity_score = row[3:].value_counts()['Yes']
+    except KeyError:
+        comorbidity_score = 0
+
+    return comorbidity_score
 
 
 def get_lace(data_col, val):
@@ -142,7 +149,7 @@ def get_lace(data_col, val):
 
 def get_score(data_csv):
     """Calculate score for a health measure.
-    data_csv: name of CSV file containing health data to parse
+    :param data_csv - name of CSV file containing health data to parse
     """
     measure = parse_user_input()
     print("Getting score for %s..." % measure)
@@ -153,9 +160,9 @@ def get_score(data_csv):
     # records for measure
     measure_df = full_df.loc[full_df['diagnosis_code'].isin(DIAGNOSIS_CODES[measure]),
                              LACE_ATTRIBUTES + COMORBIDITY_CODES[measure]]
-    # calculation: comorbidity value for each record
-    # comorbidity = calculate_comorbidity(measure_df, measure)
-    # (sum of each 'yes' in corresponding comorbity column, then get value from table)
+    # calculation: comorbidity value for each row, in ComorbidityScore column
+    measure_df['ComorbidityScore'] = measure_df.apply(get_comorbidity, axis=1)
+
     # calculation: lace score for each row as sum of points for each lace variable
     # (LengthOfStay, EmergencyAdmission, ComorbidityScore, EDVisit)
     print(measure_df)
