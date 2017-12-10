@@ -1,3 +1,7 @@
+import argparse
+
+MEASURES = {'AMI', 'COPD', 'HF', 'HWR', 'PN', 'THA-TKA'}
+
 DIAGNOSIS_CODES = {'AMI': ['410.00', '410.01', '410.10', '410.11', '410.20', '410.21', '410.30', '410.31', '410.40',
                            '410.41', '410.50', '410.51', '410.60', '410.61', '410.70', '410.71', '410.80', '410.81',
                            '410.90', '410.91'],
@@ -112,8 +116,17 @@ LACE_ATTRIBUTES = ['LengthofStay',  # LengthOfStay
 
 
 def parse_user_input():
-    """Validate and standardize user input for measure."""
-    pass
+    """Validate and standardize user input to use as measure."""
+    arg_parser = argparse.ArgumentParser(description="accepts name of measure to calculate score")
+    arg_parser.add_argument("user_input",
+                            type=str,
+                            help="measure for which score is calculated: AMI, COPD, HF, HWR, PN, THA-TKA")
+    args = arg_parser.parse_args()
+    # user input MUST be a valid measure
+    if args.user_input.upper() not in MEASURES:
+        print("ERROR: Input must be a valid measure: AMI, COPD, HF, HWR, PN or THA-TKA.")
+    else:
+        return args.user_input.upper()
 
 
 def get_comorbidity(dataframe, measure):
@@ -130,7 +143,9 @@ def get_score(data_csv):
     """Calculate score for a health measure.
     data_csv: name of CSV file containing health data to parse
     """
-    pass
+    measure = parse_user_input()
+    print("Getting score for %s..." % measure)
+
 
 if __name__ == '__main__':
     get_score('data/Sample Data 2016.csv')
