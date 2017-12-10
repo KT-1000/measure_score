@@ -1,4 +1,5 @@
 import argparse
+import pandas as pd
 
 MEASURES = {'AMI', 'COPD', 'HF', 'HWR', 'PN', 'THA-TKA'}
 
@@ -145,6 +146,19 @@ def get_score(data_csv):
     """
     measure = parse_user_input()
     print("Getting score for %s..." % measure)
+
+    # full data set from CSV
+    full_df = pd.read_csv(data_csv,
+                          index_col=0)
+    # records for measure
+    measure_df = full_df.loc[full_df['diagnosis_code'].isin(DIAGNOSIS_CODES[measure]),
+                             LACE_ATTRIBUTES + COMORBIDITY_CODES[measure]]
+    # calculation: comorbidity value for each record
+    # comorbidity = calculate_comorbidity(measure_df, measure)
+    # (sum of each 'yes' in corresponding comorbity column, then get value from table)
+    # calculation: lace score for each row as sum of points for each lace variable
+    # (LengthOfStay, EmergencyAdmission, ComorbidityScore, EDVisit)
+    print(measure_df)
 
 
 if __name__ == '__main__':
