@@ -229,7 +229,11 @@ def get_score(data_csv):
     # calculation: lace score for each row as sum of points for each lace variable
     measure_df['LaceScore'] = measure_df.apply(get_lace, axis=1)
 
-    print(measure_df)
+    # calculation: measure score - (count of records w/ LACE score > 9) divided by (count of records)
+    denominator = len(measure_df.index)
+    numerator = measure_df['LaceScore'].apply(lambda x: x > 9).value_counts()[True]
+    measure_score = float(numerator)/float(denominator)
+    print("Score for %s is %f." % (measure, measure_score))
 
 if __name__ == '__main__':
     get_score('data/Sample Data 2016.csv')
