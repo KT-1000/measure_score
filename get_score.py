@@ -112,8 +112,8 @@ COMORBIDITY_CODES = {'AMI': ['HistoryofPTCA', 'HistoryofCABG', 'Congestiveheartf
 
 LACE_ATTRIBUTES = ['LengthofStay',  # LengthOfStay
                    'Inpatient_visits',  # EmergencyAdmission
-                   # 'ComorbidityScore',
-                   'ED_visits']  # ED_visits
+                   'ComorbidityScore',
+                   'ED_visits']  # EDVisit
 
 
 def parse_user_input():
@@ -131,20 +131,83 @@ def parse_user_input():
 
 
 def get_comorbidity(row):
-    """Sum all the instances of comorbid conditions."""
+    """Sum all the positive instances of comorbid conditions, i.e. occurrences of 'yes' per condition
+    :param row - series representing one row of DataFrame
+    """
     comorbidity_score = 0
     try:
-        # trim LACE columns from row
-        comorbidity_score = row[3:].value_counts()['Yes']
+        # trim LACE columns from row to leave only condition columns
+        comorbidity_score = row[4:].value_counts()['Yes']
     except KeyError:
         comorbidity_score = 0
 
     return comorbidity_score
 
 
-def get_lace(data_col, val):
-    """Calculate LACE score for specified column."""
-    pass
+def map_l_score(length_of_stay):
+    """Assign lace points according to length of stay.
+    :param length_of_stay - number value from LengthofStay column
+    """
+    if length_of_stay < 1:
+        return 0
+    elif length_of_stay < 4:
+        return int(length_of_stay)
+    elif 4 <= length_of_stay <= 6:
+        return 4
+    elif 7 <= length_of_stay <= 13:
+        return 5
+    elif length_of_stay >= 14:
+        return 7
+
+
+# def map_a_score(emergency_admission):
+#     """Assign lace points according to acute admissions.
+#     :param emergency_admission - whether or not a visit is acute/emergency
+#     """
+#     return 0
+
+
+def map_c_score(comorbidity_score):
+    """Assign lace points according to comorbidity score.
+    :param comorbidity_score -
+    """
+    if 0 <= comorbidity_score <= 3:
+        return int(comorbidity_score)
+    elif comorbidity_score >= 4:
+        return 5
+
+
+def map_e_score(ed_visits):
+    """Assign lace points according to ED Visits"""
+    if 0 <= ed_visits <= 3:
+        return ed_visits
+    elif ed_visits >= 4:
+        return 4
+
+
+def get_lace(row):
+    """Calculate LACE score for record in specified column:
+    LengthOfStay, EmergencyAdmission, ComorbidityScore, EDVisit.
+    :param row - series representing one row of DataFrame
+    """
+    lace_score = 0
+    # add length of stay to lace score
+    l_score = map_l_score(row['LengthofStay'])
+    lace_score += l_score
+
+    # TODO add acute admissions/EmergencyAdmission to lace score once acute admissions are determined
+    # a_score = map_a_score(row['Inpatient_visits'])
+    # lace_score += a_score
+
+    # add comorbidity score to lace score
+    c_score = map_c_score(row['ComorbidityScore'])
+    lace_score += c_score
+
+    # add ed visitd score to lace score
+    e_score = map_e_score(row['ED_visits'])
+    lace_score += e_score
+
+    return lace_score
 
 
 def get_score(data_csv):
@@ -155,18 +218,18 @@ def get_score(data_csv):
     print("Getting score for %s..." % measure)
 
     # full data set from CSV
-    full_df = pd.read_csv(data_csv,
-                          index_col=0)
-    # records for measure
+    full_df = pd.read_csv(data_csv)
+    # only pertinent records for measure
     measure_df = full_df.loc[full_df['diagnosis_code'].isin(DIAGNOSIS_CODES[measure]),
                              LACE_ATTRIBUTES + COMORBIDITY_CODES[measure]]
+
     # calculation: comorbidity value for each row, in ComorbidityScore column
     measure_df['ComorbidityScore'] = measure_df.apply(get_comorbidity, axis=1)
 
     # calculation: lace score for each row as sum of points for each lace variable
-    # (LengthOfStay, EmergencyAdmission, ComorbidityScore, EDVisit)
-    print(measure_df)
+    measure_df['LaceScore'] = measure_df.apply(get_lace, axis=1)
 
+    print(measure_df)
 
 if __name__ == '__main__':
     get_score('data/Sample Data 2016.csv')
