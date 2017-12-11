@@ -113,7 +113,7 @@ COMORBIDITY_CODES = {'AMI': ['HistoryofPTCA', 'HistoryofCABG', 'Congestiveheartf
 LACE_ATTRIBUTES = ['LengthofStay',  # LengthOfStay
                    'Inpatient_visits',  # EmergencyAdmission
                    'ComorbidityScore',
-                   'ED_visits']  # ED_visits
+                   'ED_visits']  # EDVisit
 
 
 def parse_user_input():
@@ -131,12 +131,12 @@ def parse_user_input():
 
 
 def get_comorbidity(row):
-    """Sum all the instances of comorbid conditions.
+    """Sum all the positive instances of comorbid conditions, i.e. occurrences of 'yes' per condition
     :param row - series representing one row of DataFrame
     """
     comorbidity_score = 0
     try:
-        # trim LACE columns from row
+        # trim LACE columns from row to leave only condition columns
         comorbidity_score = row[4:].value_counts()['Yes']
     except KeyError:
         comorbidity_score = 0
@@ -145,7 +145,9 @@ def get_comorbidity(row):
 
 
 def map_l_score(length_of_stay):
-    """Given length of stay, return lace points"""
+    """Assign lace points for length of stay.
+    :param length_of_stay - number value from LengthofStay column
+    """
     if length_of_stay < 1:
         return 0
     elif length_of_stay < 4:
@@ -163,16 +165,14 @@ def map_a_score():
     pass
 
 
-def map_c_score():
-    """"""
-    # try:
-    #     if c_val < 4:
-    #         lace_score += c_val
-    #     else:
-    #         lace_score += 4
-    # except KeyError:
-    #     lace_score = 0
-    pass
+def map_c_score(comorbidity_score):
+    """Assign lace points for comorbidity score.
+    :param comorbidity_score -
+    """
+    if 0 <= comorbidity_score <= 3:
+        return int(comorbidity_score)
+    elif comorbidity_score >= 4:
+        return 5
 
 
 def map_e_score():
@@ -188,14 +188,13 @@ def get_lace(row):
     lace_score = 0
     # add length of stay to lace score
     l_score = map_l_score(row['LengthofStay'])
-    print(l_score)
 
     # add comorbidity score to lace score
-    # print(row['ComorbidityScore'])
-    # print(type(row[['ComorbidityScore']]))
+    c_score = map_c_score(row['ComorbidityScore'])
 
-    # print(lace_score)
-    # return lace_score
+    lace_score = lace_score + l_score + c_score
+    print(lace_score)
+    # return lace_score + l_score + a_score + c_score + e_score
 
 
 def get_score(data_csv):
