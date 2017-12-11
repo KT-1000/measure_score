@@ -145,7 +145,7 @@ def get_comorbidity(row):
 
 
 def map_l_score(length_of_stay):
-    """Assign lace points for length of stay.
+    """Assign lace points according to length of stay.
     :param length_of_stay - number value from LengthofStay column
     """
     if length_of_stay < 1:
@@ -160,13 +160,15 @@ def map_l_score(length_of_stay):
         return 7
 
 
-def map_a_score():
-    """"""
-    pass
+# def map_a_score(emergency_admission):
+#     """Assign lace points according to acute admissions.
+#     :param emergency_admission - whether or not a visit is acute/emergency
+#     """
+#     return 0
 
 
 def map_c_score(comorbidity_score):
-    """Assign lace points for comorbidity score.
+    """Assign lace points according to comorbidity score.
     :param comorbidity_score -
     """
     if 0 <= comorbidity_score <= 3:
@@ -175,9 +177,12 @@ def map_c_score(comorbidity_score):
         return 5
 
 
-def map_e_score():
-    """"""
-    pass
+def map_e_score(ed_visits):
+    """Assign lace points according to ED Visits"""
+    if 0 <= ed_visits <= 3:
+        return ed_visits
+    elif ed_visits >= 4:
+        return 4
 
 
 def get_lace(row):
@@ -188,13 +193,21 @@ def get_lace(row):
     lace_score = 0
     # add length of stay to lace score
     l_score = map_l_score(row['LengthofStay'])
+    lace_score += l_score
+
+    # TODO add acute admissions/EmergencyAdmission to lace score once acute admissions are determined
+    # a_score = map_a_score(row['Inpatient_visits'])
+    # lace_score += a_score
 
     # add comorbidity score to lace score
     c_score = map_c_score(row['ComorbidityScore'])
+    lace_score += c_score
 
-    lace_score = lace_score + l_score + c_score
-    print(lace_score)
-    # return lace_score + l_score + a_score + c_score + e_score
+    # add ed visitd score to lace score
+    e_score = map_e_score(row['ED_visits'])
+    lace_score += e_score
+
+    return lace_score
 
 
 def get_score(data_csv):
@@ -216,7 +229,7 @@ def get_score(data_csv):
     # calculation: lace score for each row as sum of points for each lace variable
     measure_df['LaceScore'] = measure_df.apply(get_lace, axis=1)
 
-    # print(measure_df)
+    print(measure_df)
 
 if __name__ == '__main__':
     get_score('data/Sample Data 2016.csv')
