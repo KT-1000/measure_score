@@ -160,11 +160,14 @@ def map_l_score(length_of_stay):
         return 7
 
 
-# def map_a_score(emergency_admission):
-#     """Assign lace points according to acute admissions.
-#     :param emergency_admission - whether or not a visit is acute/emergency
-#     """
-#     return 0
+def map_a_score(emergency_admission):
+    """Assign lace points according to acute admissions.
+    :param emergency_admission - whether or not a visit is acute/emergency
+    """
+    if emergency_admission >= 1:
+        return emergency_admission * 3
+    else:
+        return 0
 
 
 def map_c_score(comorbidity_score):
@@ -195,9 +198,8 @@ def get_lace(row):
     l_score = map_l_score(row['LengthofStay'])
     lace_score += l_score
 
-    # TODO add acute admissions/EmergencyAdmission to lace score once acute admissions are determined
-    # a_score = map_a_score(row['Inpatient_visits'])
-    # lace_score += a_score
+    a_score = map_a_score(row['Inpatient_visits'])
+    lace_score += a_score
 
     # add comorbidity score to lace score
     c_score = map_c_score(row['ComorbidityScore'])
@@ -230,9 +232,9 @@ def get_score(data_csv):
     measure_df['LaceScore'] = measure_df.apply(get_lace, axis=1)
 
     # calculation: measure score - (count of records w/ LACE score > 9) divided by (count of records)
-    denominator = len(measure_df.index)
-    numerator = measure_df['LaceScore'].apply(lambda x: x > 9).value_counts()[True]
-    measure_score = float(numerator)/float(denominator)
+    record_count = len(measure_df.index)
+    lace_record_count = measure_df['LaceScore'].apply(lambda x: x > 9).value_counts()[True]
+    measure_score = float(lace_record_count)/float(record_count)
     print("Score for %s is %f." % (measure, measure_score))
 
 if __name__ == '__main__':
