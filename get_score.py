@@ -164,8 +164,8 @@ def map_a_score(emergency_admission):
     """Assign lace points according to acute admissions.
     :param emergency_admission - whether or not a visit is acute/emergency
     """
-    if emergency_admission >= 1:
-        return emergency_admission * 3
+    if emergency_admission == 1:
+        return 3
     else:
         return 0
 
